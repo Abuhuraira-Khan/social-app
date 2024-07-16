@@ -8,7 +8,7 @@ const PostViewPage = () => {
 
     useEffect(() => {
         const getPost = async ()=>{
-            const response = await fetch(`http://localhost:4400/post/view-one-post/${postId}`);
+            const response = await fetch(`https://social-app-kigf.onrender.com/post/view-one-post/${postId}`);
             const data = await response.json();
             console.log("first",data)
             setGetPost(data);

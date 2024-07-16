@@ -66,7 +66,7 @@ const UploadCard = () => {
     useEffect(() => {
        const getUserDetails = async ()=>{
         try {
-            const res = await fetch(`http://localhost:4400/post/upload-post/user/${authUser._id}`)
+            const res = await fetch(`https://social-app-kigf.onrender.com/post/upload-post/user/${authUser._id}`)
             const result = await res.json();
             setPostForm({
                 ...postForm,
@@ -85,7 +85,7 @@ const UploadCard = () => {
     // upload new post
     const sendPostData = useContext(getPostContext);
     const uploadPost = async () => {
-        const res = await fetch(`http://localhost:4400/post/upload-post`, {
+        const res = await fetch(`https://social-app-kigf.onrender.com/post/upload-post`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

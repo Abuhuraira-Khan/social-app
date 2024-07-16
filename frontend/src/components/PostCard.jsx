@@ -31,7 +31,7 @@ const DeleteWarning = ({postId,dispatch}) => {
   }, []);
   const handleDeletePost = async ()=>{
     try {
-      const res = await fetch(`http://localhost:4400/user/delete-post`,{
+      const res = await fetch(`https://social-app-kigf.onrender.com/user/delete-post`,{
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -64,7 +64,7 @@ const CommentCard = React.memo((props)=>{
 
   const deleteComment = async (id)=>{
     console.log(id)
-    const res = await fetch(`http://localhost:4400/post/delete-comment/${id}&${props.comment.postId}`,{
+    const res = await fetch(`https://social-app-kigf.onrender.com/post/delete-comment/${id}&${props.comment.postId}`,{
       method:'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ const CommentCard = React.memo((props)=>{
 
   useEffect(() => {
     const getuser = async ()=>{
-      const res = await fetch(`http://localhost:4400/post/get-commented-user/${props.comment.userId}`)
+      const res = await fetch(`https://social-app-kigf.onrender.com/post/get-commented-user/${props.comment.userId}`)
       const data = await res.json();
       setCardComment({...cardComment,...data.data});
     }
@@ -138,6 +138,7 @@ const CommentSection = (props) => {
   const [authUser,setAuthUser] = useAuth();
   const [newComment, setNewComment] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const navigate = useNavigate();
 
 
   // const handleLike = (id) => {
@@ -172,7 +173,7 @@ const CommentSection = (props) => {
      likes: [],
      replies: [],
     }
-    const res  = await fetch(`http://localhost:4400/post/add-new-comment`,{
+    const res  = await fetch(`https://social-app-kigf.onrender.com/post/add-new-comment`,{
       method:'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -209,7 +210,7 @@ const CommentSection = (props) => {
 
   useEffect(() => {
     const getUser = async ()=>{
-      const res = await fetch(`http://localhost:4400/post/get-user-in-comment/${authUser._id}`)
+      const res = await fetch(`https://social-app-kigf.onrender.com/post/get-user-in-comment/${authUser._id}`)
       const data = await res.json();
       setUserProfile(data);
     }
@@ -242,7 +243,7 @@ const CommentSection = (props) => {
           </div>
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            onClick={handleAddComment}
+            onClick={()=>authUser?handleAddComment():navigate('/login')}
           >
             Post Comment
           </button>
@@ -325,7 +326,7 @@ const PostCard = (props) => {
 
   const likeHandle = async () => {
     if(state.like.some(like=>like.likedUserId===authUser._id)){
-    const res = await fetch(`http://localhost:4400/post/like-the-post`,{
+    const res = await fetch(`https://social-app-kigf.onrender.com/post/like-the-post`,{
       method:'PUT',
       headers: {
         'Content-Type':'application/json'
@@ -339,7 +340,7 @@ const PostCard = (props) => {
     dispatch({ type: 'remove-like', value:{_id:'',likedUserId:authUser._id} });
   }
    else{
-    const res = await fetch(`http://localhost:4400/post/like-the-post`,{
+    const res = await fetch(`https://social-app-kigf.onrender.com/post/like-the-post`,{
       method:'PUT',
       headers: {
         'Content-Type':'application/json'
@@ -365,7 +366,7 @@ const PostCard = (props) => {
   // get post author information
   useEffect(() => {
     const getAuthor = async () => {
-      const res = await fetch(`http://localhost:4400/user/get-post-author/${props.post.userId}`)
+      const res = await fetch(`https://social-app-kigf.onrender.com/user/get-post-author/${props.post.userId}`)
       const data = await res.json();
       dispatch({type:'get_author', author:data})
     }
@@ -425,7 +426,7 @@ const PostCard = (props) => {
           <p><span>{state.share.length}</span> share</p>
         </div>
         <div className="flex items-center border-t-2 p-2 px-5 justify-between capitalize text-slate-700">
-          <button onClick={()=>authUser?likeHandle():`/login`} className={`flex items-center space-x-2 capitalize ${state.like.some(like=>like.likedUserId===authUser._id)? 'text-accent' : ''}`}>
+          <button onClick={()=>authUser?likeHandle():navigate(`/login`)} className={`flex items-center space-x-2 capitalize ${state.like.some(like=>like.likedUserId===authUser._id)? 'text-accent' : ''}`}>
             {state.like.some(like=>like.likedUserId===authUser._id) ? <BiSolidLike size={iSize} /> : <BiLike size={iSize} />} <span>Like</span>
           </button>
           <button onClick={()=>dispatch({type:'open-comment'})} className='flex items-center space-x-2 capitalize'><MdOutlineModeComment size={iSize} /><span>Comment</span></button>

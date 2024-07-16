@@ -71,7 +71,7 @@ const HomePage = () => {
   useEffect(() => {
     const getAllPost = async ()=>{
       try {
-        const res = await fetch('http://localhost:4400/post/getAllPost')
+        const res = await fetch('https://social-app-kigf.onrender.com/post/getAllPost')
         const result = await res.json();
         setAllPost(result.data.reverse())
       } catch (error) {
@@ -88,7 +88,7 @@ const HomePage = () => {
 
     useEffect(() => {
       const getSuggestionUser = async ()=>{
-        const res = await fetch(`http://localhost:4400/random/friends-suggest`);
+        const res = await fetch(`https://social-app-kigf.onrender.com/random/friends-suggest`);
         const data = await res.json();
         setGetFSuggest(data);
       }

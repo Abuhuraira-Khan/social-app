@@ -76,7 +76,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const getuser = async () => {
       try {
-        const res = await fetch(`http://localhost:4400/user/get-profile/${userId}`);
+        const res = await fetch(`https://social-app-kigf.onrender.com/user/get-profile/${userId}`);
         const result = await res.json();
         if (res.ok) {
           dispatch({ type: 'get_user', user: result });
@@ -95,7 +95,7 @@ const ProfilePage = () => {
   const handleEditSave = async () => {
     dispatch({ type: 'editing' });
     if (state.isEdit) {
-      const res = await fetch(`http://localhost:4400/user/update-profile/${authUser._id}`, {
+      const res = await fetch(`https://social-app-kigf.onrender.com/user/update-profile/${authUser._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
