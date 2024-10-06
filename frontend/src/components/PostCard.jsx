@@ -8,14 +8,18 @@ import { TbShare2 } from "react-icons/tb";
 import { MdDeleteOutline } from "react-icons/md";
 import { CiEdit } from "react-icons/ci";
 import { RxCross2 } from "react-icons/rx";
+import { MdNavigateNext, MdNavigateBefore, MdClose } from 'react-icons/md';
 import {FaCopy} from 'react-icons/fa6';
-import { getPostContext } from './context/Context';
+import { getPostContext,apiUrl } from './context/Context';
 
 
+// Delete Warning
 const DeleteWarning = ({postId,dispatch}) => {
 
   const deleteCardRef = useRef(null);
   const postC = useContext(getPostContext);
+
+  const [authUser,setAuthUser] = useAuth();
 
   useEffect(() => {
       const interval = setTimeout(() => {
@@ -31,7 +35,7 @@ const DeleteWarning = ({postId,dispatch}) => {
   }, []);
   const handleDeletePost = async ()=>{
     try {
-      const res = await fetch(`https://social-app-kigf.onrender.com/user/delete-post`,{
+      const res = await fetch(`${apiUrl}/user/delete-post/${authUser?._id}`,{
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -62,16 +66,21 @@ const DeleteWarning = ({postId,dispatch}) => {
 
 const CommentCard = React.memo((props)=>{
 
+  const [authUser,setAuthUser] = useAuth();
   const deleteComment = async (id)=>{
-    console.log(id)
-    const res = await fetch(`https://social-app-kigf.onrender.com/post/delete-comment/${id}&${props.comment.postId}`,{
+    const res = await fetch(`${apiUrl}/post/delete-comment/${id}&${props.comment.postId}`,{
       method:'PUT',
       headers: {
         'Content-Type': 'application/json',
-        }
+      },
+      body: JSON.stringify({
+        userId:authUser?._id,
+        authorId:props.comment.authorId
+      })
+
     })
     .then((result)=>{
-      if(result.ok){
+      if(result.status===200){
         props.setComments((prevComments) => prevComments.filter(comment => comment._id !== id));
         }
     })
@@ -92,7 +101,7 @@ const CommentCard = React.memo((props)=>{
 
   useEffect(() => {
     const getuser = async ()=>{
-      const res = await fetch(`https://social-app-kigf.onrender.com/post/get-commented-user/${props.comment.userId}`)
+      const res = await fetch(`${apiUrl}/post/get-commented-user/${props.comment.userId}`)
       const data = await res.json();
       setCardComment({...cardComment,...data.data});
     }
@@ -108,11 +117,11 @@ const CommentCard = React.memo((props)=>{
       <img
         src={cardComment.profilePic}
         alt="Profile"
-        className="w-10 h-10 rounded-full mr-3"
+        className="w-10 h-10 object-cover rounded-full mr-3"
       />
       <div>
-        <div className="bg-gray-100 p-3 rounded-lg relative ">
-          <button onClick={()=>deleteComment(cardComment._id)} className={`absolute ${cardComment.userId===props.comment.userId?'block':'hidden'} top-0 right-1 hover:text-red-500`}><MdDeleteOutline/></button>
+        <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg relative ">
+          <button onClick={()=>deleteComment(cardComment._id)} className={`absolute ${cardComment.userId===authUser?._id?'block':'hidden'} top-0 right-1 hover:text-red-500`}><MdDeleteOutline/></button>
           <p className="font-semibold">{cardComment.userFullName}</p>
           <p>{cardComment.text}</p>
         </div>
@@ -131,12 +140,13 @@ const CommentCard = React.memo((props)=>{
   )
 })
 
+// Comment Section
 const CommentSection = (props) => {
-  const [comments, setComments] = useState([
-  ]);
+  const [comments, setComments] = useState([]);
 
   const [authUser,setAuthUser] = useAuth();
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState(``);
+  const [userProfile,setUserProfile] = useState({});
   const [isTyping, setIsTyping] = useState(false);
   const navigate = useNavigate();
 
@@ -149,31 +159,20 @@ const CommentSection = (props) => {
   //   );
   // };
 
-  const [newCommentObj,setNewCommentObj] = useState(
-    {
-      postId:props.postId,
-      userId: props.userId,
-      profilePic: '',
-      userFullName:'',
-      text: newComment,
-      likes: [],
-      replies: [],
-    }
-  )
-
+  // Comment handling
   const handleAddComment = async () => {
     if (newComment.trim() === '') return;
 
     const commentDoc = {
-     postId: newCommentObj.postId,
-     userId: newCommentObj.userId,
-     profilePic:newCommentObj.profilePic,
-     userFullName:newCommentObj.userFullName,
+     postId: props.postId,
+     userId: props.userId,
+     authorId:props.authorId,
      text: newComment,
      likes: [],
      replies: [],
+     ...userProfile
     }
-    const res  = await fetch(`https://social-app-kigf.onrender.com/post/add-new-comment`,{
+    const res  = await fetch(`${apiUrl}/post/add-new-comment`,{
       method:'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -206,23 +205,21 @@ const CommentSection = (props) => {
     }
   }, [])
 
-  let [userProfile,setUserProfile] = useState('');
-
   useEffect(() => {
     const getUser = async ()=>{
-      const res = await fetch(`https://social-app-kigf.onrender.com/post/get-user-in-comment/${authUser._id}`)
+      const res = await fetch(`${apiUrl}/post/get-user-in-comment/${authUser._id}`)
       const data = await res.json();
       setUserProfile(data);
     }
   getUser();
     return () => {
-      setUserProfile('')
+      setUserProfile({})
     }
   }, [])
-  
+
   return (
-    <div className='w-screen h-screen z-30 fixed bg-black-rgba top-0 left-0 '>
-      <div className="max-w-lg h-screen mx-auto my-5 p-4 bg-white rounded shadow-2xl overflow-y-auto">
+    <div className='w-screen md:mt-0 mt-14 h-screen z-30 fixed bg-black-rgba top-0 left-0 '>
+      <div className="max-w-lg h-screen mx-auto my-5 p-4 bg-white dark:bg-gray-800 rounded shadow-2xl overflow-y-auto">
         <div className='flex justify-end items-center'>
           <button onClick={()=>props.dispatch({type:'open-comment'})} className='hover:bg-slate-200 p-1 rounded-full'><RxCross2 size={25} /></button>
         </div>
@@ -230,12 +227,12 @@ const CommentSection = (props) => {
         <div className="mb-4">
           <div className="flex items-start mb-2">
             <img
-              src={userProfile}
+              src={userProfile.profilePic}
               alt="Profile"
-              className="w-10 h-10 rounded-full mr-3"
+              className="w-10 h-10 object-cover flex-none rounded-full mr-3"
             />
             <textarea
-              className="w-full max p-2 border rounded focus:outline-none resize-none focus:ring-2 focus:ring-primery"
+              className="w-full max p-2 border dark:bg-gray-700 outline-none rounded focus:outline-none resize-none focus:ring-2 focus:ring-primery"
               placeholder="Write a comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -258,6 +255,7 @@ const CommentSection = (props) => {
   );
 };
 
+// Share Section
 const ShareSection = ({url,dispatch})=>{
 
   const handleCopyUrl = ()=>{
@@ -268,10 +266,10 @@ const ShareSection = ({url,dispatch})=>{
   return(
     <div className='w-screen h-screen top-0 left-0 fixed bg-black-rgba z-50 flex justify-center items-center'>
       <div>
-        <div className='bg-white relative rounded-md p-5 flex w-96 h-22 justify-center items-center'>
+        <div className='bg-white dark:bg-gray-800 relative rounded-md p-5 flex w-96 h-22 justify-center items-center'>
           <button onClick={()=>dispatch({type:'open-share'})} className=' absolute top-0 right-1'><RxCross2 size={18}/></button>
           <div className="w-full flex">
-            <p className='bg-slate-200 p-1 w-full truncate'>{url}</p>
+            <p className='bg-slate-200 dark:bg-gray-700 p-1 w-full truncate'>{url}</p>
             <button onClick={handleCopyUrl} className='bg-primery w-10 text-white flex justify-center items-center'><FaCopy size={22}/></button>
           </div>
         </div>
@@ -279,6 +277,52 @@ const ShareSection = ({url,dispatch})=>{
     </div>
   )
 }
+
+// view post
+const ViewPost = ({ post, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [allIndexes, setAllIndexes] = useState([...post?.imgVdo]);
+
+  return (
+    <div className="fixed top-0 left-0 z-50 w-full h-screen bg-gray-900 text-white flex justify-center items-center">
+      {/* Close Button */}
+      <button 
+        className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 p-2 rounded-full shadow-lg"
+        onClick={onClose}
+      >
+        <MdClose size={24} />
+      </button>
+
+      {/* Slider Navigation */}
+      <button onClick={() => setCurrentIndex((prevIndex) => prevIndex<=0?prevIndex-0:prevIndex - 1)} className="absolute left-4 top-1/2 z-10 transform -translate-y-1/2 bg-gray-800 hover:bg-gray-700 p-3 rounded-full shadow-lg">
+        <MdNavigateBefore size={30} />
+      </button>
+
+      <div className='relative overflow-hidden max-h-[90vh] transition-all duration-1000 max-w-[80%]'>
+        {
+        allIndexes[currentIndex]?.type === 'img' ? (
+          <img
+          src={allIndexes[currentIndex]?.url}
+          className="max-w-80% transition-all duration-1000 relative left-1/2 -translate-x-1/2 max-h-[90vh]"
+          alt="Post"
+        />
+        ) : (
+          <video
+            src={allIndexes[currentIndex]?.url}
+            className="max-w-80% relative transition-all duration-1000 left-1/2 -translate-x-1/2 max-h-[90vh]"
+            controls
+          />
+        )
+        }
+      </div>
+
+      {/* Slider Navigation */}
+      <button onClick={() => setCurrentIndex(prevIndex=>prevIndex>=allIndexes.length-1?prevIndex+0:prevIndex + 1)} className="absolute z-10 right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 hover:bg-gray-700 p-3 rounded-full shadow-lg">
+        <MdNavigateNext size={30} />
+      </button>
+    </div>
+  );
+};
 
 const initialState = {
   like:[],
@@ -289,7 +333,8 @@ const initialState = {
   openComment:false,
   openShare:false,
   imgVdo: [],
-  title:``
+  title:``,
+  author:{},
 };
 
 const reducer = (state, action) => {
@@ -310,7 +355,7 @@ const reducer = (state, action) => {
         {...state,...action.post}
       )
     case 'get_author':
-      return {...state,...action.author}
+      return {...state,author:{...action.author}}
     // case 'go_post':
     //   return {...state,...action.post}  
     default:
@@ -318,130 +363,210 @@ const reducer = (state, action) => {
   }
 };
 
-
 const PostCard = (props) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const navigate = useNavigate();
-  const [authUser,setAuthUser] = useAuth();
+  const mediaContainerRef = useRef(null);
+  const [authUser, setAuthUser] = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false); // Add state for dropdown menu
+  const [viewFullPost, setViewFullPost] = useState(false); // Add state for dropdown menu
+  const [mediaDragged, setMediaDragged] = useState(false);
+  const [postContentExpanded, setPostContentExpanded] = useState(false);
+  const postContentRef = useRef(null);
 
+  // Like handling logic
   const likeHandle = async () => {
-    if(state.like.some(like=>like.likedUserId===authUser._id)){
-    const res = await fetch(`https://social-app-kigf.onrender.com/post/like-the-post`,{
-      method:'PUT',
+
+    if(!authUser?._id) return navigate('/login');
+
+    const userAlreadyLiked = state.like?.some((like) => like?.likedUserId === authUser?._id);
+    const url = `${apiUrl}/post/like-the-post`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
       headers: {
-        'Content-Type':'application/json'
+        'Content-Type': 'application/json',
       },
-      body:JSON.stringify({
-        postId:state._id,
-        userId:authUser._id,
-        type:'liked'
-      })
-    })
-    dispatch({ type: 'remove-like', value:{_id:'',likedUserId:authUser._id} });
-  }
-   else{
-    const res = await fetch(`https://social-app-kigf.onrender.com/post/like-the-post`,{
-      method:'PUT',
-      headers: {
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({
-        postId:state._id,
-        userId:authUser._id,
-        type:'unlike'
-      })
-    })
-    dispatch({ type: 'add-like', value:{_id:'',likedUserId:authUser._id} });
-  }
+      body: JSON.stringify({
+        postId: state?._id,
+        userId: authUser?._id,
+        type: !userAlreadyLiked ? 'unlike' : 'liked',
+      }),
+    });
+
+    if(res.ok) {
+      if (userAlreadyLiked) {
+        dispatch({ type: 'remove-like', value: { _id: '', likedUserId: authUser?._id } });
+      } else {
+        dispatch({ type: 'add-like', value: { _id: '', likedUserId: authUser?._id } });
+      }
+    }
   };
 
   useEffect(() => {
-    const getPost = ()=>{
+    const getPost = () => {
       const post = props.post;
-      dispatch({type:'get_post',post:post})
-    }
+      dispatch({ type: 'get_post', post: post });
+    };
     getPost();
-  }, [props.post])
-
-  // get post author information
-  useEffect(() => {
-    const getAuthor = async () => {
-      const res = await fetch(`https://social-app-kigf.onrender.com/user/get-post-author/${props.post.userId}`)
-      const data = await res.json();
-      dispatch({type:'get_author', author:data})
-    }
-    getAuthor();
-  },[props.post.userId])
-
+  }, [props.post]);
   const [shareUrl, setShareUrl] = useState('')
 
   const handleShare = (e)=>{
     dispatch({type:'open-share'})
-    const ur = location.href+'post/'+props.post._id;
+    const ur = location.origin+'/post/'+props.post._id;
     setShareUrl(ur)
   }
 
+  // Get post author information
+  useEffect(() => {
+    const getAuthor = async () => {
+      const res = await fetch(`${apiUrl}/user/get-post-author/${props.post.userId}`);
+      const data = await res.json();
+      dispatch({ type: 'get_author', author: { ...data } });
+    };
+    getAuthor();
+  }, [props.post.userId]);
 
-  const iSize = 22;
+  // make horizontal scroll
+  useEffect(() => {
+    const mediaContainer = mediaContainerRef.current;
 
+    // moushe move
+    const mouseMoveListener = (event) => {
+        mediaContainer.scrollLeft -= event.movementX;
+    };
+
+    if (mediaContainer) {
+      mediaContainer.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        setMediaDragged(true);
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+        mediaContainer.addEventListener('mousemove', mouseMoveListener);
+      });
+
+      // mouse up
+      mediaContainer.addEventListener('mouseup', (event) => {
+        event.preventDefault();
+        setMediaDragged(false);
+        document.body.style.userSelect = 'auto';
+        document.body.style.cursor = 'auto';
+        mediaContainer.removeEventListener('mousemove', mouseMoveListener);
+      });
+    }
+  
+    return () => {
+      
+    }
+  }, [])
+  
   return (
-    <div className='max-w-[550px]'>
-      <div className="postCard relative border">
-        <div className="postCard-wrapper p-2">
-          <div className="user flex justify-between items-center font-medium">
-            <div onClick={()=>{navigate(`/profile/${state.userId}`)}} className=' hover:underline flex space-x-2 items-center cursor-pointer'>
-              <img className='w-10 h-10 rounded-full' src={state.userImage} />
-              <p>{state.userFullName}</p>
-            </div>
-            {/* post edit delete */}
-            <div className={`${authUser && state.userId === authUser._id?'block': 'hidden'}`}> 
-              <div className='flex items-center space-x-3'>
-                <button onClick={()=>{dispatch({type:'show_d_warning'})}}><MdDeleteOutline size={iSize}/></button>
-                <button><CiEdit size={iSize}/></button>
-              </div>
-            </div>
-          </div>
-          {/* conditional show post delete warning */}
-          {state.showDWarning?<DeleteWarning postId={state._id} dispatch={dispatch}/>:null}
-          <div className="post-content p-2">
-            <p>{state.title}</p>
-          </div>
-          <div className={`post-image rounded-md lg:max-w-full`}>
-            <div className={` lg:max-w-full rounded-md overflow-hidden ${state.imgVdo.length > 1 ? "grid grid-cols-2" : ""} ${state.imgVdo.length > 3 ? 'grid-rows-2' : ''}`}> 
-
-              {state.imgVdo.slice(0,3).map((img, i) =>{
-                return(
-                  <img key={i} className='w-full object-cover border-2' src={img.url} />
-                )
-              })}
-              <div className={`bg-red-600 flex justify-center items-center ${state.imgVdo.length>3?'block':'hidden'}`}>
-              <button>see more</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className=' capitalize flex justify-between border-t-2 px-5 text-slate-500'>
-          <p><span>{state.like.length}</span> like</p>
-          <p><span>{state.comment.length}</span> comment</p>
-          <p><span>{state.share.length}</span> share</p>
-        </div>
-        <div className="flex items-center border-t-2 p-2 px-5 justify-between capitalize text-slate-700">
-          <button onClick={()=>authUser?likeHandle():navigate(`/login`)} className={`flex items-center space-x-2 capitalize ${state.like.some(like=>like.likedUserId===authUser._id)? 'text-accent' : ''}`}>
-            {state.like.some(like=>like.likedUserId===authUser._id) ? <BiSolidLike size={iSize} /> : <BiLike size={iSize} />} <span>Like</span>
-          </button>
-          <button onClick={()=>dispatch({type:'open-comment'})} className='flex items-center space-x-2 capitalize'><MdOutlineModeComment size={iSize} /><span>Comment</span></button>
-          <button onClick={handleShare} className='flex items-center space-x-2 capitalize'><TbShare2 size={iSize} /><span>Share</span></button>
-        </div>
-      </div>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-4">
+      {viewFullPost && <ViewPost post={state} onClose={() => setViewFullPost(false)} />}
       {/* conditional comment open closs */}
-      {state.openComment?<CommentSection comment={state.comment} userId={authUser && authUser._id}  postId={state._id} dispatch={dispatch} />:null}
+      {state.openComment?<CommentSection comment={state.comment}  userId={authUser && authUser._id} authorId={state.author?.userId}  postId={state._id} dispatch={dispatch} />:null}
       {/* conditional share open closs */}
       {state.openShare?<ShareSection url={shareUrl} dispatch={dispatch}/>:null}
+      {/* conditional show post delete warning */}
+      {state.showDWarning?<DeleteWarning postId={state._id} dispatch={dispatch}/>:null}
+      <div className="flex items-center relative justify-between">
+        <div className="flex items-center">
+          <img onClick={() => navigate(`/profile/${state.author?.userId}`)} src={state.author?.userImage} alt="Author" className="w-10 h-10 object-cover cursor-pointer overflow-hidden rounded-full mr-3" />
+          <div>
+            <h2 onClick={() => navigate(`/profile/${state.author?.userId}`)} className="font-bold hover:underline cursor-pointer">
+              {state.author?.userFullName}
+            </h2>
+            <p className="text-gray-500 text-sm">{state.postTime}</p>
+          </div>
+        </div>
 
+        {/* Dropdown Button for Edit/Delete */}
+        <div className={`abosolute ${state.userId === authUser?._id ? 'block' : 'hidden'} right-0 top-0`}>
+          <button onClick={() => setDropdownOpen(!dropdownOpen)} className="text-gray-700 dark:text-gray-300">
+            ⋮ {/* You can use any icon or three dots */}
+          </button>
 
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-32 overflow-hidden bg-white rounded-md shadow-lg z-10">
+              <button
+                onClick={() => dispatch({ type: 'show_d_warning' })}
+                className="block px-4 py-2 text-red-500 hover:bg-gray-100 w-full text-left"
+              >
+                <MdDeleteOutline className="inline-block mr-2" /> Delete
+              </button>
+              {/* <button
+                onClick={() => navigate(`/edit-post/${state._id}`)}
+                className="block px-4 py-2 text-blue-500 hover:bg-gray-100 w-full text-left"
+              >
+                <CiEdit className="inline-block mr-2" /> Edit
+              </button> */}
+            </div>
+          )}
+        </div>
+      </div>
 
+      {/* Post Content */}
+      <p
+        ref={postContentRef}
+        className={`text-gray-700 dark:text-gray-300 whitespace-pre-wrap ${postContentExpanded ? 'max-h-full' : 'max-h-24'} overflow-hidden mt-2`}
+      >
+        {state.title}
+      </p>
+
+      {postContentRef.current?.scrollHeight > 96 && (
+        <button
+          onClick={() => setPostContentExpanded(!postContentExpanded)}
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+        >
+          {postContentExpanded ? 'Show less' : '...Show more'}
+        </button>
+      )}
+
+      {/* Media Section */}
+      <div style={{scrollbarWidth: 'none'}} ref={mediaContainerRef} className={`flex ${state.imgVdo.length ? '' : 'hidden'} ${state.imgVdo.length > 1 ? 'overflow-x-auto' : ''} max-h-80 rounded gap-2 mt-2`}>
+        {state.imgVdo.map((media, index) => (
+          <div
+            key={index}
+            className={`rounded-lg ${state.imgVdo.length === 1 ? 'w-full' : 'flex-shrink-0'} overflow-hidden bg-transparent sm:max-h-80`}>
+            {media.type === 'img' ? (
+              <img
+                onClick={() => mediaDragged ? null : setViewFullPost(true)}
+                src={media.url}
+                alt={`media-${index}`}
+                className={`object-contain w-full h-full ${state.imgVdo?.length === 1 ? '' : 'max-w-56 sm:max-w-80 object-cover sm:max-h-80'}`}
+              />
+            ) : (
+              <video
+                onClick={() => mediaDragged ? null : setViewFullPost(true)}
+                className={`object-contain w-full h-full ${state.imgVdo?.length === 1 ? '' : 'max-h-80'}`}
+                controls
+              >
+                <source src={media.url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <button onClick={likeHandle} className={`flex ${state.like?.some((like) => like?.likedUserId === authUser?._id) ? 'text-orange-600 dark:text-orange-600' : ' hover:text-blue-600 dark:hover:text-blue-600'} items-center space-x-1 dark:text-gray-300 text-gray-600`}>
+          {state.like?.some((like) => like?.likedUserId === authUser?._id)?<BiSolidLike/>:<BiLike />}
+          <span>{state.like?.length} <span className='hidden sm:inline'>Likes</span></span>
+        </button>
+        <button onClick={() => dispatch({ type: 'open-comment' })} className="flex items-center space-x-1 dark:text-gray-300 text-gray-600 hover:text-blue-600 dark:hover:text-blue-600">
+          <MdOutlineModeComment />
+          <span>{state.comment?.length} <span className='hidden sm:inline'>Comment</span></span>
+        </button>
+        <button onClick={handleShare} className="flex items-center space-x-1 dark:text-gray-300 text-gray-600 hover:text-blue-600 dark:hover:text-blue-600">
+          <TbShare2 />
+          <span><span className='hidden sm:inline'>Share</span></span>
+        </button>
+      </div>
     </div>
   );
 };
+
 
 export default React.memo(PostCard);

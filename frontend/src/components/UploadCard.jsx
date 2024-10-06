@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RxCross2 } from "react-icons/rx";
 import { LuImagePlus } from "react-icons/lu";
 import { RiVideoAddLine } from "react-icons/ri";
-import { useAuth,postBtnContext,getPostContext } from "./context/Context";
+import { useAuth,postBtnContext,getPostContext,apiUrl } from "./context/Context";
 
 
 const UploadCard = () => {
@@ -66,7 +66,7 @@ const UploadCard = () => {
     useEffect(() => {
        const getUserDetails = async ()=>{
         try {
-            const res = await fetch(`https://social-app-kigf.onrender.com/post/upload-post/user/${authUser._id}`)
+            const res = await fetch(`${apiUrl}/post/upload-post/user/${authUser._id}`)
             const result = await res.json();
             setPostForm({
                 ...postForm,
@@ -85,25 +85,28 @@ const UploadCard = () => {
     // upload new post
     const sendPostData = useContext(getPostContext);
     const uploadPost = async () => {
-        const res = await fetch(`https://social-app-kigf.onrender.com/post/upload-post`, {
+        const res = await fetch(`${apiUrl}/post/upload-post`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authUser?._id}`
             },
             body: JSON.stringify({
                 ...postForm,
                 imgVdo: imgList,
 
             })
-        }).then((result) => {
+        }).then(async(result) => {
+            const data = await result.json();
             if(result.ok){
                 alert("Post Uploaded Successfully");
                 cardShowbtn.setPostBtn(!cardShowbtn.postBtn);
-                sendPostData.setGetPosts([...sendPostData.getPosts,postForm])
+                sendPostData.setGetPosts([...sendPostData.getPosts,data])
 
             }
             else{
-                alert("Something went wrong you can't Upload Post Right Now")
+                alert(data.message)
+                navigate('/login')
             }
         })
     }
