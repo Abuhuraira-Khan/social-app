@@ -103,7 +103,7 @@ const ProfilePage = () => {
   const handleEditSave = async () => {
     dispatch({ type: 'editing' });
     if (state.isEdit) {
-      const res = await fetch(`${apiUrl}/user/update-profile/${authUser._id}`, {
+      const res = await fetch(`${apiUrl}/user/update-profile/${authUser?._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ useEffect(() => {
               <button onClick={() => { coverPicRef.current.click() }} className={`z-10 text-sm dark:bg-slate-800 bg-slate-200 ${state.isEdit ? 'block' : 'hidden'} font-medium flex space-x-1 items-center p-1 absolute bottom-1 right-2 capitalize`}>
                 <GoUpload size={20} /> <span>upload cover</span>
               </button>
-              <input ref={coverPicRef} onChange={handleCoverPicU} type="file" name="coverPic" className='hidden' />
+              <input ref={coverPicRef} onChange={handleCoverPicU} accept='image/*' type="file" name="coverPic" className='hidden' />
             </div>
             <div className="profile-pic w-full h-full bg-black-rgba absolute top-0 left-0">
               <div className="pic-wrapper absolute top-[50%] left-[50%] translate-x-[-50%] w-40 h-40 overflow-hidden rounded-full outline outline-4 outline-bgc">
@@ -180,7 +180,7 @@ useEffect(() => {
                   <button onClick={() => { profilePicRef.current.click() }} className='bg-black-rgba p-2 rounded-full absolute top-[50%] translate-x-[-50%] left-[50%] translate-y-[-50%] z-10 text-bgc hover:text-accent'>
                     <GoUpload size={40} />
                   </button>
-                  <input ref={profilePicRef} onChange={handleProfilePicU} type="file" name='profilePic' className='hidden' />
+                  <input ref={profilePicRef} onChange={handleProfilePicU} type="file" name='profilePic' accept='image/*' className='hidden' />
                 </div>
               </div>
             </div>

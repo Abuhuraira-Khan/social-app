@@ -11,6 +11,7 @@ import { RxCross2 } from "react-icons/rx";
 import { MdNavigateNext, MdNavigateBefore, MdClose } from 'react-icons/md';
 import {FaCopy} from 'react-icons/fa6';
 import { getPostContext,apiUrl } from './context/Context';
+import { LoaderBlur } from './Loder';
 
 
 // Delete Warning
@@ -18,6 +19,7 @@ const DeleteWarning = ({postId,dispatch}) => {
 
   const deleteCardRef = useRef(null);
   const postC = useContext(getPostContext);
+  const [loading,setLoading] = useState(false);
 
   const [authUser,setAuthUser] = useAuth();
 
@@ -35,6 +37,7 @@ const DeleteWarning = ({postId,dispatch}) => {
   }, []);
   const handleDeletePost = async ()=>{
     try {
+      setLoading(true);
       const res = await fetch(`${apiUrl}/user/delete-post/${authUser?._id}`,{
         method: "DELETE",
         headers: {
@@ -42,17 +45,19 @@ const DeleteWarning = ({postId,dispatch}) => {
           },
           body: JSON.stringify({postId})
       })
-      const data = await res.json()
       if(res.ok){
+        setLoading(false);
         dispatch({type:'show_d_warning'})
       }
     } catch (error) {
+      setLoading(false);
       console.log(error)
     }
   }
 
   return (
     <div className='fixed w-full h-full z-30 top-0 left-0  p-2 bg-black-rgba'>
+      {loading && <LoaderBlur/>}
       <div ref={deleteCardRef} className='w-96 relative duration-300 top-0 left-[50%] translate-x-[-50%] bg-white p-2 '>
         <h1 className='mb-2'>Are you sure you want to delete this post?</h1>
         <div className='flex space-x-3 justify-end'>

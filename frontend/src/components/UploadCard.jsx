@@ -4,6 +4,7 @@ import { RxCross2 } from "react-icons/rx";
 import { LuImagePlus } from "react-icons/lu";
 import { RiVideoAddLine } from "react-icons/ri";
 import { useAuth,postBtnContext,getPostContext,apiUrl } from "./context/Context";
+import { LoaderBlur } from "./Loder";
 
 
 const UploadCard = () => {
@@ -13,6 +14,7 @@ const UploadCard = () => {
     const sImgRef = useRef(null);
     const sVdoRef = useRef(null);
     const navigate = useNavigate();
+    const [loading,setLoading] = useState(false);
 
     const [postForm, setPostForm] = useState({
         title: '',
@@ -85,6 +87,7 @@ const UploadCard = () => {
     // upload new post
     const sendPostData = useContext(getPostContext);
     const uploadPost = async () => {
+        setLoading(true)
         const res = await fetch(`${apiUrl}/post/upload-post`, {
             method: 'POST',
             headers: {
@@ -99,12 +102,13 @@ const UploadCard = () => {
         }).then(async(result) => {
             const data = await result.json();
             if(result.ok){
-                alert("Post Uploaded Successfully");
+                setLoading(false)
                 cardShowbtn.setPostBtn(!cardShowbtn.postBtn);
-                sendPostData.setGetPosts([...sendPostData.getPosts,data])
+                sendPostData.setGetPosts([data,...sendPostData.getPosts])
 
             }
             else{
+                setLoading(false)
                 alert(data.message)
                 navigate('/login')
             }
@@ -120,9 +124,11 @@ const UploadCard = () => {
       }
     }, [])
     
+    console.log(postForm.imgVdo);
 
   return (
     <div className="w-screen h-screen bg-black-rgba fixed top-0 left-0 z-30">
+        {loading && <LoaderBlur/>}
       <div className="upload-card w-full h-full flex justify-center items-center ">
         <div className="wrapper relative w-[500px] bg-bgc p-1">
             <div className="flex justify-end  items-start">
@@ -166,8 +172,8 @@ const UploadCard = () => {
             </div>
             {/* img vdo */}
             <div className="flex space-x-1 border-t-2">
-                <button onClick={handleImgU} className="p-1 px-5 flex font-bold capitalize items-center space-x-1 text-lg "><LuImagePlus size={35} /><input ref={sImgRef} onChange={handleChangeI} type="file" name="vdo" className="hidden"/> <span>photo</span></button>
-                <button onClick={handleVdoU} className="p-1 px-5 flex font-bold capitalize items-center space-x-1 text-lg "><RiVideoAddLine size={35} /><input ref={sVdoRef} onChange={handleChangeV} type="file" name="img" className="hidden"/> <span>video</span></button>
+                <button onClick={handleImgU} className="p-1 px-5 flex font-bold capitalize items-center space-x-1 text-lg "><LuImagePlus size={35} /><input ref={sImgRef} onChange={handleChangeI} type="file" name="vdo" accept="image/*" className="hidden"/> <span>photo</span></button>
+                <button onClick={handleVdoU} className="p-1 px-5 flex font-bold capitalize items-center space-x-1 text-lg "><RiVideoAddLine size={35} /><input ref={sVdoRef} onChange={handleChangeV} type="file" name="img" accept="video/*" className="hidden"/> <span>video</span></button>
             </div>
           </div>
           <div className="flex justify-center">
