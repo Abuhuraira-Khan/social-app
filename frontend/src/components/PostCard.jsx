@@ -482,7 +482,9 @@ const PostCard = (props) => {
             <h2 onClick={() => navigate(`/profile/${state.author?.userId}`)} className="font-bold hover:underline cursor-pointer">
               {state.author?.userFullName}
             </h2>
-            <p className="text-gray-500 text-sm">{state.postTime}</p>
+            <p className="text-gray-500 text-sm">{
+              new Date(state.postTime).toLocaleDateString()
+            }</p>
           </div>
         </div>
 

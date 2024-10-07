@@ -85,7 +85,9 @@ const NotificationPage = () => {
                   {notification?.notifications?.notifyType==='new post'?' Added new post':''}
                   {notification?.notifications?.notifyType==='comment'?' Commented on your post':''}
                 </p>
-                <span className="text-sm text-gray-400">{notification.notifyTime}</span>
+                <span className="text-sm text-gray-400">{
+                  new Date(notification?.notifications?.notifyTime).toLocaleDateString()
+                }</span>
               </div>
               {/* <div className="flex items-center">
                 <button
